@@ -1,0 +1,78 @@
+-- Delta Mobile Friendly - Speed / Jump / God (Chat Commands)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+getgenv().ws = 16       -- WalkSpeed
+getgenv().jh = 7.2      -- JumpHeight
+getgenv().god = false
+
+local function notify(msg)
+    game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", {
+        Text = "[Delta Hack] " .. msg,
+        Color = Color3.fromRGB(255, 0, 255),
+        Font = Enum.Font.SourceSansBold,
+        FontSize = Enum.FontSize.Size24
+    })
+end
+
+local function updateHumanoid()
+    if not player.Character then return end
+    local hum = player.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed = ws
+        hum.JumpHeight = jh
+        hum.UseJumpPower = false  -- Fuerza JumpHeight
+        if god then
+            hum.MaxHealth = math.huge
+            hum.Health = math.huge
+        end
+    end
+end
+
+-- Loop anti-reset (cada frame)
+RunService.Heartbeat:Connect(updateHumanoid)
+
+-- God PRO (si te dañan, reset health)
+player.CharacterAdded:Connect(function(char)
+    local hum = char:WaitForChild("Humanoid")
+    hum.HealthChanged:Connect(function(health)
+        if god and health < math.huge then
+            hum.Health = math.huge
+        end
+    end)
+    updateHumanoid()
+end)
+
+-- Comandos en chat (escribe en chat del juego)
+player.Chatted:Connect(function(msg)
+    msg = msg:lower()
+    
+    if msg:sub(1,7) == "!speed " then
+        local num = tonumber(msg:sub(8))
+        if num and num >= 0 then
+            ws = num
+            notify("Velocidad cambiada a: " .. ws)
+        end
+        
+    elseif msg == "!god" then
+        god = not god
+        notify("God Mode: " .. (god and "ON 🔥" or "OFF"))
+        
+    elseif msg:sub(1,6) == "!jump " then
+        local num = tonumber(msg:sub(7))
+        if num and num >= 0 then
+            jh = num
+            notify("Salto cambiado a: " .. jh)
+        end
+        
+    elseif msg == "!reset" or msg == "!rs" then
+        ws = 16
+        jh = 7.2
+        god = false
+        notify("Todo reseteado a normal!")
+    end
+end)
+
+-- Mensaje inicial
+notify("✅ Listo! Escribe en chat: !speed 50 | !jump 20 | !god | !reset")
